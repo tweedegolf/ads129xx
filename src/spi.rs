@@ -2,6 +2,11 @@ use embedded_hal::blocking::spi as bspi;
 use embedded_hal::digital::v2::OutputPin;
 use embedded_hal::timer::CountDown;
 
+use embedded_hal::spi as eh_spi;
+
+/// SPI mode
+pub const MODE: eh_spi::Mode = eh_spi::MODE_1;
+
 #[derive(Debug, Copy, Clone)]
 pub enum SpiError<E, E2> {
     /// SPI bus I/O error
@@ -66,12 +71,15 @@ where
         self.ncs.set_high().map_err(SpiError::NCSError)?;
         self.wait(10)?;
 
-        res?; // Drop out of function with SPIError only setting NCS.
+        res?; // Drop out of function with SPIError only after setting NCS.
         Ok(())
     }
 
-    // TODO remove?
     pub fn wait(&mut self, i: u16) -> Result<(), SpiError<E, EO>> {
         crate::util::wait(&mut self.timer, i).map_err(|_| SpiError::WaitError)
+    }
+
+    pub fn into_inner(self) -> (SPI, NCS, TIM) {
+        (self.spi, self.ncs, self.timer)
     }
 }
