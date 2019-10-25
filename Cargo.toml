@@ -4,7 +4,10 @@ version = "0.1.0"
 authors = ["Henk Dieter <henkdieter@tweedegolf.com>"]
 edition = "2018"
 readme = "README.md"
-
+description = "Driver crate for the Texas Instruments ADS1292 24-bit 2-channel low-power analog front end for ECG applications."
+repository = "https://github.com/tweedegolf/ads129xx"
+keywords = ["ads1292", "ads1291", "ads1292R", "ecg", "embedded"]
+categories = ["embedded", "no-std", "hardware-support"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
