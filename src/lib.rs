@@ -1,8 +1,14 @@
 #![no_std]
 
+use embedded_hal::blocking::spi as bspi;
+use embedded_hal::digital::v2::OutputPin;
+use embedded_hal::timer::CountDown;
+
+use crate::spi::SpiDevice;
+
 pub mod ads1292;
-pub mod spi;
 pub mod data;
+pub mod spi;
 mod util;
 
 /// Read / write-able registers
@@ -97,3 +103,46 @@ impl<E, EO> Into<Ads129xxError<E, EO>> for crate::spi::SpiError<E, EO> {
 }
 
 pub type Result<T, E, EO> = core::result::Result<T, Ads129xxError<E, EO>>;
+
+/// Represents any ADS129xx device
+pub trait Ads129xx<SPI, NCS, TIM, E, EO>
+where
+    SPI: bspi::Transfer<u8, Error = E> + bspi::Write<u8, Error = E>,
+    NCS: OutputPin<Error = EO>,
+    TIM: CountDown,
+{
+    /// Get a mutable reference to the wrapped SpiDevice
+    fn spi_device(&mut self) -> &mut SpiDevice<SPI, NCS, TIM>;
+
+    /// Consume self and return the wrapped SpiDevice
+    fn into_spi_device(self) -> SpiDevice<SPI, NCS, TIM>;
+
+    /// Send a command to the ADS129xx
+    #[inline]
+    fn cmd(&mut self, cmd: Command) -> Result<(), E, EO> {
+        self.spi_device().write(&[cmd.word()]).map_err(|e| e.into())
+    }
+
+    #[inline]
+    fn wait(&mut self, i: u16) -> Result<(), E, EO> {
+        self.spi_device().wait(i).map_err(|e| e.into())
+    }
+
+    /// Read a register of the ADS1292
+    #[inline]
+    fn read_register(&mut self, reg: Register) -> Result<u8, E, EO> {
+        let nreg = 0x00; // n = 1, but subtract 1
+        let mut buf: [u8; 4] = [Command::RREG.word() | reg.addr(), nreg, 0x00, 0x00];
+        self.spi_device().transfer(&mut buf).map_err(|e| e.into())?;
+        Ok(buf[2])
+    }
+
+    /// Write in register of the ADS1292
+    #[inline]
+    fn write_register(&mut self, reg: Register, data: u8) -> Result<(), E, EO> {
+        let nreg = 0x00; // n = 1, but subtract 1
+        let buf: [u8; 3] = [Command::WREG.word() | reg.addr(), nreg, data];
+        self.spi_device().write(&buf).map_err(|e| e.into())?;
+        Ok(())
+    }
+}

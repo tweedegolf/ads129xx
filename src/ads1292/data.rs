@@ -1,27 +1,32 @@
 use core::fmt;
 
-use crate::data::{LeadOffStatus, ChannelData, GpioStatus};
+use crate::data::{ChannelData, GpioStatus, LeadOffStatus};
 
+/// Represents a 9-byte data block from the Ads1292
 #[derive(Copy, Clone, Default)]
 pub struct Ads1292Data {
     pub data: [u8; 9],
 }
 
 impl Ads1292Data {
+    /// Get the Lead-off status for this data block
     pub fn lead_off_status(&self) -> LeadOffStatus {
         let status = (self.data[0] << 1) | (self.data[1] >> 7);
         LeadOffStatus { status }
     }
 
+    /// Get the GPIO status for this data block
     pub fn gpio_status(&self) -> GpioStatus {
         let status = self.data[1] >> 5;
         GpioStatus { status }
     }
 
+    /// Get the data from channel 1
     pub fn channel_1(&self) -> ChannelData {
         ChannelData(self.data[3], self.data[4], self.data[5])
     }
 
+    /// Get the data from channel 2
     pub fn channel_2(&self) -> ChannelData {
         ChannelData(self.data[6], self.data[7], self.data[8])
     }

@@ -2,29 +2,25 @@ pub mod data;
 pub mod data_stream;
 
 use crate::spi::SpiDevice;
-use crate::{Ads129xxError, Command, Register, Result};
+use crate::{Ads129xx, Ads129xxError, Command, Register, Result};
 
+use data::Ads1292Data;
+use data_stream::Ads1292DataStream;
 use embedded_hal::blocking::spi as bspi;
 use embedded_hal::digital::v2::OutputPin;
 use embedded_hal::timer::CountDown;
-use data::Ads1292Data;
-use data_stream::Ads1292DataStream;
-
-
 
 pub struct Ads1292<SPI, NCS, TIM> {
     spi: SpiDevice<SPI, NCS, TIM>,
 }
 
 impl<SPI, NCS, TIM, E, EO> Ads1292<SPI, NCS, TIM>
-    where
-        SPI: bspi::Transfer<u8, Error = E> + bspi::Write<u8, Error = E>,
-        NCS: OutputPin<Error = EO>,
-        TIM: CountDown,
+where
+    SPI: bspi::Transfer<u8, Error = E> + bspi::Write<u8, Error = E>,
+    NCS: OutputPin<Error = EO>,
+    TIM: CountDown,
 {
-    pub fn init(
-        spi: SpiDevice<SPI, NCS, TIM>,
-    ) -> Result<Ads1292<SPI, NCS, TIM>, E, EO> {
+    pub fn init(spi: SpiDevice<SPI, NCS, TIM>) -> Result<Ads1292<SPI, NCS, TIM>, E, EO> {
         let mut result = Ads1292 { spi };
 
         // We start in DATAC, thus need to stop it.
@@ -40,27 +36,7 @@ impl<SPI, NCS, TIM, E, EO> Ads1292<SPI, NCS, TIM>
         Ok(result)
     }
 
-    #[inline]
-    pub fn cmd(&mut self, cmd: Command) -> Result<(), E, EO> {
-        self.spi.write(&[cmd.word()]).map_err(|e| e.into())
-    }
-
-    #[inline]
-    pub fn read_register(&mut self, reg: Register) -> Result<u8, E, EO> {
-        let nreg = 0x00; // n = 1, but subtract 1
-        let mut buf: [u8; 4] = [Command::RREG.word() | reg.addr(), nreg, 0x00, 0x00];
-        self.spi.transfer(&mut buf).map_err(|e| e.into())?;
-        Ok(buf[2])
-    }
-
-    #[inline]
-    pub fn write_register(&mut self, reg: Register, data: u8) -> Result<(), E, EO> {
-        let nreg = 0x00; // n = 1, but subtract 1
-        let buf: [u8; 3] = [Command::WREG.word() | reg.addr(), nreg, data];
-        self.spi.write(&buf).map_err(|e| e.into())?;
-        Ok(())
-    }
-
+    /// Send RDATA command and read a single data block from the ADS1292
     #[inline]
     pub fn read_data(&mut self) -> Result<Ads1292Data, E, EO> {
         let mut buf = [0u8; 9];
@@ -71,15 +47,22 @@ impl<SPI, NCS, TIM, E, EO> Ads1292<SPI, NCS, TIM>
         Ok(buf.into())
     }
 
-    pub fn wait(&mut self, i: u16) -> Result<(), E, EO> {
-        self.spi.wait(i).map_err(|e| e.into())
-    }
-
-    pub fn into_inner(self) -> SpiDevice<SPI, NCS, TIM> {
-        self.spi
-    }
-
     pub fn into_data_stream(self) -> Result<Ads1292DataStream<SPI, NCS, TIM, E, EO>, E, EO> {
         Ads1292DataStream::init(self)
+    }
+}
+
+impl<SPI, NCS, TIM, E, EO> Ads129xx<SPI, NCS, TIM, E, EO> for Ads1292<SPI, NCS, TIM>
+where
+    SPI: bspi::Transfer<u8, Error = E> + bspi::Write<u8, Error = E>,
+    NCS: OutputPin<Error = EO>,
+    TIM: CountDown,
+{
+    fn spi_device(&mut self) -> &mut SpiDevice<SPI, NCS, TIM> {
+        &mut self.spi
+    }
+
+    fn into_spi_device(self) -> SpiDevice<SPI, NCS, TIM> {
+        self.spi
     }
 }

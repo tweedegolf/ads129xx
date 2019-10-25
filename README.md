@@ -5,6 +5,11 @@ This initial version supports the ADS1292 (for the most part), but it's a goal t
 
 Contributions welcome!
 
+## Usage example
+```rust
+
+```
+
 ## Functionality
 
 - Send commands:

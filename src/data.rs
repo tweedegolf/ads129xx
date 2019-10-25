@@ -53,7 +53,7 @@ impl fmt::Display for LeadOffStatus {
 }
 
 pub struct GpioStatus {
-    /// The status. Bits [4:7] are not used/
+    /// The status. Bits [4:7] are not used
     pub status: u8,
 }
 
