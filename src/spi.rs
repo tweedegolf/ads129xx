@@ -39,12 +39,14 @@ where
     NCS: OutputPin<Error = EO>,
     TIM: CountDown,
 {
+    /// Create a new SPI device
     pub fn new(spi: SPI, mut ncs: NCS, timer: TIM) -> Result<Self, SpiError<E, EO>> {
         ncs.set_high().map_err(SpiError::NCSError)?;
 
         Ok(SpiDevice { spi, ncs, timer })
     }
 
+    /// Transfer the buffer to the device, the passed buffer will contain the read data.
     #[inline]
     pub fn transfer(&mut self, buffer: &mut [u8]) -> Result<(), SpiError<E, EO>> {
         self.ncs.set_low().map_err(SpiError::NCSError)?;
@@ -60,6 +62,7 @@ where
         Ok(())
     }
 
+    /// Write a number of bytes to the device.
     #[inline]
     pub fn write(&mut self, buffer: &[u8]) -> Result<(), SpiError<E, EO>> {
         self.ncs.set_low().map_err(SpiError::NCSError)?;
@@ -79,6 +82,7 @@ where
         crate::util::wait(&mut self.timer, i).map_err(|_| SpiError::WaitError)
     }
 
+    /// Consume self and release inner resources.
     pub fn into_inner(self) -> (SPI, NCS, TIM) {
         (self.spi, self.ncs, self.timer)
     }

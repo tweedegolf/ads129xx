@@ -10,6 +10,7 @@ use embedded_hal::blocking::spi as bspi;
 use embedded_hal::digital::v2::OutputPin;
 use embedded_hal::timer::CountDown;
 
+/// Represents an ADS1292 ECG front-end module
 pub struct Ads1292<SPI, NCS, TIM> {
     spi: SpiDevice<SPI, NCS, TIM>,
 }
@@ -20,6 +21,8 @@ where
     NCS: OutputPin<Error = EO>,
     TIM: CountDown,
 {
+    /// Create a bew Ads1292. Sends SDATAC command, as by default the Ads1292 is in
+    /// Continuous data reading mode
     pub fn init(spi: SpiDevice<SPI, NCS, TIM>) -> Result<Ads1292<SPI, NCS, TIM>, E, EO> {
         let mut result = Ads1292 { spi };
 
@@ -47,6 +50,7 @@ where
         Ok(buf.into())
     }
 
+    /// Convert this Ads1292 into a Ads1292DataStream
     pub fn into_data_stream(self) -> Result<Ads1292DataStream<SPI, NCS, TIM, E, EO>, E, EO> {
         Ads1292DataStream::init(self)
     }
