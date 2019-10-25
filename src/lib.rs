@@ -1,4 +1,7 @@
+#![no_std]
+
 pub mod data;
+
 pub mod spi;
 pub mod util;
 
@@ -9,7 +12,7 @@ use spi::SpiDevice;
 use embedded_hal::digital::v2::OutputPin;
 use embedded_hal::timer::CountDown;
 
-use data::Data;
+use data::Ads1292Data;
 
 /// SPI mode
 pub const MODE: eh_spi::Mode = eh_spi::MODE_1;
@@ -199,7 +202,7 @@ where
     NCS: OutputPin<Error = EO>,
     TIM: CountDown,
 {
-    type Item = Result<Data, Ads1292Error<E, EO>>;
+    type Item = Result<Ads1292Data, Ads1292Error<E, EO>>;
     type IntoIter = Ads1292DataStream<'a, SPI, NCS, TIM>;
 
     fn into_iter(self) -> Self::IntoIter {
