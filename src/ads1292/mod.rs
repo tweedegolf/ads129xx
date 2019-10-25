@@ -1,4 +1,6 @@
+/// ADS1292-specific data formats
 pub mod data;
+/// ADS1292-specific data stream
 pub mod data_stream;
 
 use crate::spi::SpiDevice;

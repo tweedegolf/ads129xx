@@ -1,13 +1,59 @@
 #![no_std]
 
+//!
+//! Driver crate for the Texas Instruments ADS1292 24-bit 2-channel low-power analog front end for ECG applications.
+//!
+//! This initial version supports the ADS1292 (for the most part), but it's a goal to support the ADS1291 and ADS1292R as well.
+//!
+//! Usage:
+//!
+//! ```
+//!// spi: spi interface
+//!// ncs: not-Chip-Select pin
+//!// timer: timer, 500kHz timeout.
+//!
+//!let spi_device = SpiDevice::new(spi, ncs, timer)?;
+//!let mut ads = Ads1292::init(spi_device)?;
+//!
+//!// start conversions
+//!ads.cmd(ads129xx::Command::START).unwrap();
+//!ads.wait(200)?; // Wait a while in between sending commands
+//!ads.cmd(ads129xx::Command::RDATAC).unwrap();
+//!ads.wait(200)?;
+//!
+//!let mut stream = ads.into_data_stream()?;
+//!
+//!let mut buf = [[ChannelData::default(); 2]; 10];
+//!
+//!// Opens stream, sends RDATAC command to ads
+//!let data_stream = ads1292.into_data_stream()?;
+//!ads.wait(200)?;
+//!
+//!// A buffer to read data into
+//!let mut buf = [[Ads1292Data::default(); 2]; 2000];
+//!
+//!for i in buf.iter_mut() {
+//!    // some way of finding out NDRDY has been low since last read (preferably by an interrupt-set flag)
+//    while !data_ready() {}
+//!    // data_stream always returns data (for now), so we can unwrap here
+//!    *i = data_stream.next().unwrap()?;
+//!}
+//!// Don't forget to close; this will send the SDATAC command to the ads
+//!data_stream.into_inner();
+//!```
+//!
+
 use embedded_hal::blocking::spi as bspi;
 use embedded_hal::digital::v2::OutputPin;
 use embedded_hal::timer::CountDown;
 
 use crate::spi::SpiDevice;
 
+/// Ads1292-specific code
 pub mod ads1292;
+/// Data representation
 pub mod data;
+/// SPI interface
 pub mod spi;
 mod util;
 
