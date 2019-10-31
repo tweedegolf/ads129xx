@@ -44,9 +44,17 @@ where
     /// Send RDATA command and read a single data block from the ADS1292
     #[inline]
     pub fn read_data(&mut self) -> Result<Ads1292Data, E, EO> {
-        let mut buf = [0u8; 9];
         // Send Read command
         self.cmd(Command::RDATA)?;
+        // Receive data
+        self.read()
+    }
+
+    /// Read a single data block without sending the RDATA command first
+    /// To be used in RDATAC mode
+    pub fn read(&mut self) -> Result<Ads1292Data, E, EO> {
+        let mut buf = [0u8; 9];
+
         // Receive data
         self.spi.transfer(&mut buf).map_err(|e| e.into())?;
         Ok(buf.into())
