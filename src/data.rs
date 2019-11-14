@@ -1,5 +1,6 @@
 use core::fmt;
 
+#[derive(Default, Copy, Clone)]
 pub struct LeadOffStatus {
     /// The status. Bits [5:7] are unused
     pub status: u8,
@@ -106,7 +107,7 @@ impl ChannelData {
 
 impl From<ChannelData> for i32 {
     fn from(channel_data: ChannelData) -> Self {
-        unsafe { core::mem::transmute([0, channel_data.0, channel_data.1, channel_data.2]) }
+        i32::from_be_bytes([channel_data.0, channel_data.1, channel_data.2, 0]) >> 8
     }
 }
 
