@@ -99,9 +99,13 @@ pub struct ChannelData(pub u8, pub u8, pub u8);
 impl ChannelData {
     /// Converts this channel's data into temperature in degrees Celcius (page 19)
     pub fn temp(self) -> i32 {
-        let microvolts: i32 = self.into();
-        (microvolts - 145_300) / 490 + 25
-        // microvolts
+        let units: i32 = self.into();
+        (units - 145_300) / 490 + 25
+    }
+
+    pub fn millivolts(self) -> i32 {
+        let units: i32 = self.into();
+        (units * (2400 / 0x10)) / (0x800000 / 0x10)
     }
 }
 
