@@ -1,6 +1,6 @@
 use core::fmt;
 
-#[derive(Default, Copy, Clone)]
+#[derive(Default, Copy, Clone, Debug)]
 pub struct LeadOffStatus {
     /// The status. Bits [5:7] are unused
     pub status: u8,
@@ -53,6 +53,7 @@ impl fmt::Display for LeadOffStatus {
     }
 }
 
+#[derive(Default, Copy, Clone, Debug)]
 pub struct GpioStatus {
     /// The status. Bits [4:7] are not used
     pub status: u8,
