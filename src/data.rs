@@ -104,9 +104,9 @@ impl ChannelData {
         (units - 145_300) / 490 + 25
     }
 
-    pub fn millivolts(self) -> i32 {
+    pub fn millivolts(self) -> f32 {
         let units: i32 = self.into();
-        (units * (2400 / 0x10)) / (0x800000 / 0x10)
+        (units as f32 * (2400. / 16_f32)) / (0x800_000 as f32 / 16_f32) as f32
     }
 }
 
