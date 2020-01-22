@@ -94,7 +94,7 @@ impl fmt::Display for GpioStatus {
     }
 }
 
-#[derive(Copy, Clone, Default)]
+#[derive(Copy, Clone, Default, PartialEq, Eq, Debug)]
 pub struct ChannelData(pub u8, pub u8, pub u8);
 
 impl ChannelData {
@@ -106,7 +106,11 @@ impl ChannelData {
 
     pub fn millivolts(self) -> f32 {
         let units: i32 = self.into();
-        (units as f32 * (2400. / 16_f32)) / (0x800_000 as f32 / 16_f32) as f32
+        (units as f32 * 2400.) / 0x800_000 as f32
+    }
+
+    pub fn from_millivolts(mv: f32) -> Self {
+        ((mv * (0x800_000 as f32) / 2400.) as i32).into()
     }
 }
 
@@ -116,8 +120,40 @@ impl From<ChannelData> for i32 {
     }
 }
 
+impl From<i32> for ChannelData {
+    fn from(repr: i32) -> Self {
+        let [b0, b1, b2, _b3] = (repr << 8).to_be_bytes();
+        Self(b0, b1, b2)
+    }
+}
+
 impl fmt::Display for ChannelData {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "({:02x?}, {:02x?}, {:02x?})", self.0, self.1, self.2)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn bijective_millivolts() {
+        let c1: ChannelData = ChannelData::from_millivolts(10.9883);
+        let c2: ChannelData = ChannelData::from_millivolts(-9.32);
+        let c3: ChannelData = ChannelData::from_millivolts(-0.1235);
+        assert_eq!(c1, ChannelData::from_millivolts(c1.millivolts()));
+        assert_eq!(c2, ChannelData::from_millivolts(c2.millivolts()));
+        assert_eq!(c3, ChannelData::from_millivolts(c3.millivolts()));
+    }
+
+    #[test]
+    fn bijective_i32() {
+        const C1: i32 = 123;
+        const C2: i32 = 3243;
+        const C3: i32 = -3243;
+        assert_eq!(C1, ChannelData::from(C1).into());
+        assert_eq!(C2, ChannelData::from(C2).into());
+        assert_eq!(C3, ChannelData::from(C3).into());
     }
 }
