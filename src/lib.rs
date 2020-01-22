@@ -117,7 +117,7 @@ pub type Result<T, E, EO> = core::result::Result<T, Ads129xxError<E, EO>>;
 macro_rules! simple_register {
     ($read_name:ident, $write_name:ident, $register:ident, $valuetype:ident) => {
         #[inline]
-        fn $read_name(&mut self) -> Result<($valuetype), E, EO> {
+        fn $read_name(&mut self) -> Result<$valuetype, E, EO> {
             Ok($valuetype(self.read_register(Register::$register)?))
         }
         #[inline]
