@@ -7,7 +7,7 @@
 //!
 //! Usage:
 //!
-//! ```
+//! ```norun
 //!// spi: spi interface
 //!// ncs: not-Chip-Select pin
 //!// timer: timer, 500kHz timeout.
