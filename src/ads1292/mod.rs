@@ -46,8 +46,10 @@ where
     pub fn read_data(&mut self) -> Result<Ads1292Data, E, EO> {
         // Send Read command
         self.cmd(Command::RDATA)?;
+        let mut buf = [0u8; 9];
         // Receive data
-        self.read()
+        self.spi.transfer(&mut buf)?;
+        Ok(buf.into())
     }
 
     /// Read a single data block without sending the RDATA command first
