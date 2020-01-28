@@ -51,12 +51,18 @@ where
     }
 
     /// Read a single data block without sending the RDATA command first
-    /// To be used in RDATAC mode
+    /// To be used in RDATAC mode.
+    /// WARNING: This function retrieves ecg data more power efficiently by avoiding the delays
+    /// that are usually necessary when communicating with the ADS1292 device. Use a delay of at
+    /// least 50 microseconds between retrieving samples and between retrieving a sample and
+    /// sending any other command, register read or register write.
     pub fn read(&mut self) -> Result<Ads1292Data, E, EO> {
         let mut buf = [0u8; 9];
 
         // Receive data
-        self.spi.transfer(&mut buf).map_err(|e| e.into())?;
+        unsafe {
+            self.spi.unsafe_transfer(&mut buf).map_err(|e| e.into())?;
+        }
         Ok(buf.into())
     }
 
