@@ -3,7 +3,7 @@ use core::fmt;
 use crate::data::{ChannelData, GpioStatus, LeadOffStatus};
 
 /// Represents a 9-byte data block from the Ads1292
-#[derive(Copy, Clone, Default)]
+#[derive(Copy, Clone, PartialEq, Default, Debug)]
 pub struct Ads1292Data {
     pub data: [u8; 9],
 }

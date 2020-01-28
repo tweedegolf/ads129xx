@@ -7,7 +7,7 @@
 //!
 //! Usage:
 //!
-//! ```
+//! ```norun
 //!// spi: spi interface
 //!// ncs: not-Chip-Select pin
 //!// timer: timer, 500kHz timeout.
@@ -53,48 +53,12 @@ use crate::spi::SpiDevice;
 pub mod ads1292;
 /// Data representation
 pub mod data;
+mod register;
 /// SPI interface
 pub mod spi;
 mod util;
 
-/// Read / write-able registers
-///
-/// Table 14 page 39 of specification.
-#[allow(non_camel_case_types)]
-#[derive(Clone, Copy)]
-pub enum Register {
-    /// ID Control Register (Factory-Programmed, Read-Only)
-    ID = 0x00,
-    /// Configuration Register 1
-    CONFIG1 = 0x01,
-    /// Configuration Register 2
-    CONFIG2 = 0x02,
-    /// Lead-Off Control Register
-    LOFF = 0x03,
-    /// Channel 1 Settings
-    CH1SET = 0x04,
-    /// Channel 2 Settings
-    CH2SET = 0x05,
-    /// Right Leg Drive Sense Selection
-    RLD_SENS = 0x06,
-    /// Lead-Off Sense Selection
-    LOFF_SENS = 0x07,
-    /// Lead-Off Status
-    LOFF_STAT = 0x08,
-    /// Respiration Control Register 1
-    RESP1 = 0x09,
-    /// Respiration Control Register 2    
-    RESP2 = 0x0A,
-    /// General-Purpose I/O Register
-    GPIO = 0x0B,
-}
-
-impl Register {
-    #[inline]
-    pub fn addr(self) -> u8 {
-        self as u8
-    }
-}
+pub use register::*;
 
 /// SPI commands
 ///
@@ -150,6 +114,19 @@ impl<E, EO> Into<Ads129xxError<E, EO>> for crate::spi::SpiError<E, EO> {
 
 pub type Result<T, E, EO> = core::result::Result<T, Ads129xxError<E, EO>>;
 
+macro_rules! simple_register {
+    ($read_name:ident, $write_name:ident, $register:ident, $valuetype:ident) => {
+        #[inline]
+        fn $read_name(&mut self) -> Result<$valuetype, E, EO> {
+            Ok($valuetype(self.read_register(Register::$register)?))
+        }
+        #[inline]
+        fn $write_name(&mut self, value: &$valuetype) -> Result<(), E, EO> {
+            self.write_register(Register::$register, value.0)
+        }
+    }
+}
+
 /// Represents any ADS129xx device
 pub trait Ads129xx<SPI, NCS, TIM, E, EO>
 where
@@ -191,4 +168,13 @@ where
         self.spi_device().write(&buf).map_err(|e| e.into())?;
         Ok(())
     }
+
+    simple_register!(read_conf1, write_conf1, CONFIG1, Conf1);
+    simple_register!(read_conf2, write_conf2, CONFIG2, Conf2);
+    simple_register!(read_loff, write_loff, LOFF, Loff);
+    simple_register!(read_loff_sens, write_loff_sens, LOFF_SENS, LoffSense);
+    simple_register!(read_chan1, write_chan1, CH1SET, ChannelSettings);
+    simple_register!(read_chan2, write_chan2, CH2SET, ChannelSettings);
+    simple_register!(read_rld_sens, write_rld_sens, RLD_SENS, RLDSenseSelection);
+    simple_register!(read_resp_conf2, write_resp_conf2, RESP2, RespConf2);
 }
