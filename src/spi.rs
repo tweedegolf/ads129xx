@@ -57,7 +57,19 @@ where
         })();
         self.ncs.set_high().map_err(SpiError::NCSError)?;
         self.wait(10)?;
+        res?; // Drop out of function with SPIError only after setting NCS.
+        Ok(())
+    }
 
+    /// Transfer the buffer to the device, the passed buffer will contain the read data.
+    /// WARNING: This function runs spi transfers more power efficiently by avoiding the delays
+    /// that are usually necessary when communicating with the ADS1292 device. Use a delay of at
+    /// least 50 microseconds between uses of this and other spi transfer and write functions.
+    #[inline]
+    pub unsafe fn unsafe_transfer(&mut self, buffer: &mut [u8]) -> Result<(), SpiError<E, EO>> {
+        self.ncs.set_low().map_err(SpiError::NCSError)?;
+        let res = self.spi.transfer(buffer);
+        self.ncs.set_high().map_err(SpiError::NCSError)?;
         res?; // Drop out of function with SPIError only after setting NCS.
         Ok(())
     }
