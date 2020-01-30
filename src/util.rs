@@ -1,11 +1,12 @@
 use embedded_hal::timer::CountDown;
-use nb::{block, Result};
-use void::Void;
+use nb::block;
 
 /// Blockingly wait i clock overflows.
-pub fn wait<TIM: CountDown>(timer: &mut TIM, i: u16) -> Result<(), Void> {
+pub fn wait<TIM: CountDown>(timer: &mut TIM, i: u16) {
     for _ in 0..i {
-        block!(timer.wait())?;
+        match block!(timer.wait()) {
+            Ok(()) => (),
+            Err(never) => match never {},
+        }
     }
-    Ok(())
 }

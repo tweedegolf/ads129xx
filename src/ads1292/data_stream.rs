@@ -7,41 +7,41 @@ use crate::ads1292::Ads1292;
 use crate::{Command, Result, Ads129xx};
 
 /// Ads1292 Data stream. Used to read data continuously.
-pub struct Ads1292DataStream<SPI, NCS, TIM, E, EO>
+pub struct Ads1292DataStream<SPI, NCS, TIM, E>
 where
     SPI: bspi::Transfer<u8, Error = E> + bspi::Write<u8, Error = E>,
-    NCS: OutputPin<Error = EO>,
+    NCS: OutputPin<Error = core::convert::Infallible>,
     TIM: CountDown,
 {
     ads1292: Ads1292<SPI, NCS, TIM>,
 }
 
-impl<SPI, NCS, TIM, E, EO> Ads1292DataStream<SPI, NCS, TIM, E, EO>
+impl<SPI, NCS, TIM, E> Ads1292DataStream<SPI, NCS, TIM, E>
 where
     SPI: bspi::Transfer<u8, Error = E> + bspi::Write<u8, Error = E>,
-    NCS: OutputPin<Error = EO>,
+    NCS: OutputPin<Error = core::convert::Infallible>,
     TIM: CountDown,
 {
     /// Initialize stream, send RDATAC command
-    pub fn init(mut ads1292: Ads1292<SPI, NCS, TIM>) -> Result<Self, E, EO> {
+    pub fn init(mut ads1292: Ads1292<SPI, NCS, TIM>) -> Result<Self, E> {
         ads1292.cmd(Command::RDATAC)?;
         Ok(Self { ads1292 })
     }
 
     /// Send SDATAC command, then return wrapped ADS1292
-    pub fn into_inner(mut self) -> Result<Ads1292<SPI, NCS, TIM>, E, EO> {
+    pub fn into_inner(mut self) -> Result<Ads1292<SPI, NCS, TIM>, E> {
         self.ads1292.cmd(Command::SDATAC)?;
         Ok(self.ads1292)
     }
 }
 
-impl<SPI, NCS, TIM, E, EO> Iterator for Ads1292DataStream<SPI, NCS, TIM, E, EO>
+impl<SPI, NCS, TIM, E> Iterator for Ads1292DataStream<SPI, NCS, TIM, E>
 where
     SPI: bspi::Transfer<u8, Error = E> + bspi::Write<u8, Error = E>,
-    NCS: OutputPin<Error = EO>,
+    NCS: OutputPin<Error = core::convert::Infallible>,
     TIM: CountDown,
 {
-    type Item = Result<Ads1292Data, E, EO>;
+    type Item = Result<Ads1292Data, E>;
     fn next(&mut self) -> Option<Self::Item> {
         let mut buf = [0u8; 9];
         Some(

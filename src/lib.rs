@@ -100,38 +100,38 @@ impl Command {
 }
 
 #[derive(Debug, Copy, Clone)]
-pub enum Ads129xxError<E, EO> {
+pub enum Ads129xxError<E> {
     BootFailure,
     /// SPI bus error
-    SpiError(spi::SpiError<E, EO>),
+    SpiError(E),
 }
 
-impl<E, EO> Into<Ads129xxError<E, EO>> for crate::spi::SpiError<E, EO> {
-    fn into(self) -> Ads129xxError<E, EO> {
-        Ads129xxError::SpiError(self)
+impl<E> From<E> for Ads129xxError<E> {
+    fn from(e: E) -> Self {
+        Ads129xxError::SpiError(e)
     }
 }
 
-pub type Result<T, E, EO> = core::result::Result<T, Ads129xxError<E, EO>>;
+pub type Result<T, E> = core::result::Result<T, Ads129xxError<E>>;
 
 macro_rules! simple_register {
     ($read_name:ident, $write_name:ident, $register:ident, $valuetype:ident) => {
         #[inline]
-        fn $read_name(&mut self) -> Result<$valuetype, E, EO> {
+        fn $read_name(&mut self) -> Result<$valuetype, E> {
             Ok($valuetype(self.read_register(Register::$register)?))
         }
         #[inline]
-        fn $write_name(&mut self, value: &$valuetype) -> Result<(), E, EO> {
+        fn $write_name(&mut self, value: &$valuetype) -> Result<(), E> {
             self.write_register(Register::$register, value.0)
         }
     }
 }
 
 /// Represents any ADS129xx device
-pub trait Ads129xx<SPI, NCS, TIM, E, EO>
+pub trait Ads129xx<SPI, NCS, TIM, E>
 where
     SPI: bspi::Transfer<u8, Error = E> + bspi::Write<u8, Error = E>,
-    NCS: OutputPin<Error = EO>,
+    NCS: OutputPin<Error = core::convert::Infallible>,
     TIM: CountDown,
 {
     /// Get a mutable reference to the wrapped SpiDevice
@@ -142,30 +142,30 @@ where
 
     /// Send a command to the ADS129xx
     #[inline]
-    fn cmd(&mut self, cmd: Command) -> Result<(), E, EO> {
-        self.spi_device().write(&[cmd.word()]).map_err(|e| e.into())
+    fn cmd(&mut self, cmd: Command) -> Result<(), E> {
+        self.spi_device().write(&[cmd.word()]).map_err(Into::into)
     }
 
     #[inline]
-    fn wait(&mut self, i: u16) -> Result<(), E, EO> {
-        self.spi_device().wait(i).map_err(|e| e.into())
+    fn wait(&mut self, i: u16) {
+        self.spi_device().wait(i)
     }
 
     /// Read a register of the ADS1292
     #[inline]
-    fn read_register(&mut self, reg: Register) -> Result<u8, E, EO> {
+    fn read_register(&mut self, reg: Register) -> Result<u8, E> {
         let nreg = 0x00; // n = 1, but subtract 1
         let mut buf: [u8; 4] = [Command::RREG.word() | reg.addr(), nreg, 0x00, 0x00];
-        self.spi_device().transfer(&mut buf).map_err(|e| e.into())?;
+        self.spi_device().transfer(&mut buf)?;
         Ok(buf[2])
     }
 
     /// Write in register of the ADS1292
     #[inline]
-    fn write_register(&mut self, reg: Register, data: u8) -> Result<(), E, EO> {
+    fn write_register(&mut self, reg: Register, data: u8) -> Result<(), E> {
         let nreg = 0x00; // n = 1, but subtract 1
         let buf: [u8; 3] = [Command::WREG.word() | reg.addr(), nreg, data];
-        self.spi_device().write(&buf).map_err(|e| e.into())?;
+        self.spi_device().write(&buf)?;
         Ok(())
     }
 
